@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>鸽了！</title>
+    <style>
+      * {
+          -moz-user-select: none;
+          -o-user-select: none;
+          -khtml-user-select: none;
+          -webkit-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
+      }
+      
+      body {
+          width: 100vw;
+          height: 100vh;
+          margin: 0;
+      }
+      
+      #canvas {
+          display: block;
+          width: 100vw;
+          height: 100vh;
+          position: fixed;
+          z-index: -1;
+      }
+      
+      
+      .box {
+          display: -webkit-flex;
+          display: flex;
+          -webkit-justify-content: center;
+          justify-content: center;
+          position: relative;
+      }
+      
+      .hito {
+          background-color: white;
+          font-family: Microsoft Yahei UI, Microsoft Yahei, 'Noto Sans SC',arial, sans-serif;
+          margin: 0 auto;
+          border-radius: 8px;
+          margin: 30px;
+          box-shadow: 0 3px 5px 0 rgba(0, 0, 0, 0.24),
+              0 17px 50px 0 rgba(0, 0, 0, 0.19);
+          height: auto;
+          min-height: 100px;
+          width: auto;
+          min-width: 300px;
+          max-width: 700px;
+          padding-right: 20px;
+          padding-left: 20px;
+      }
+    </style>
+    <link href="https://fonts.googleapis.com/css?family=Noto+Sans+SC" rel="stylesheet">
+  </head>
+  <body>
+    <canvas id="canvas"> </canvas>
+    <div class="box">
+      <div class="hito">
+        <%# {{ obj.output }} %>
+        <%= markdown :index %>
+      </div>
+    </div>
+    <script>
+      function random(low, high) {
+          return Math.random() * (high - low) + low;
+      }
+      
+      class Visual {
+          constructor() {
+              this.canvas = document.querySelector("#canvas");
+              this.context = this.canvas.getContext("2d");
+              this.canvasWidth = 0;
+              this.canvasHeight = 0;
+              this.particleLength = 150;
+              this.particles = [];
+              this.particleMaxRadius = 8;
+              this.handleResizeBind = this.handleResize.bind(this);
+      
+              this.initialize();
+              this.render();
+          }
+      
+          initialize() {
+              this.resizeCanvas();
+              for (let i = 0; i < this.particleLength; i++) {
+                  this.particles.push(this.createParticle(i));
+              }
+              this.bind();
+          }
+      
+          bind() {
+              window.addEventListener("resize", this.handleResizeBind, false);
+          }
+      
+          unbind() {
+              window.removeEventListener("resize", this.handleResizeBind, false);
+          }
+      
+          handleResize() {
+              this.resizeCanvas();
+          }
+      
+          resizeCanvas() {
+              this.canvasWidth = document.body.offsetWidth;
+              this.canvasHeight = document.body.offsetHeight;
+              this.canvas.width = this.canvasWidth * window.devicePixelRatio;
+              this.canvas.height = this.canvasHeight * window.devicePixelRatio;
+              this.context = this.canvas.getContext("2d");
+              this.context.scale(window.devicePixelRatio, window.devicePixelRatio);
+          }
+      
+          createParticle(id, isRecreate) {
+              const radius = random(1, this.particleMaxRadius);
+              const x = isRecreate
+                  ? -radius - random(this.particleMaxRadius * 2, this.canvasWidth)
+                  : random(0, this.canvasWidth);
+              let y = random(
+                  this.canvasHeight / 2 - 150,
+                  this.canvasHeight / 2 + 150
+              );
+              y += random(-100, 100);
+              const alpha = random(0.05, 1);
+      
+              return {
+                  id: id,
+                  x: x,
+                  y: y,
+                  startY: y,
+                  radius: radius,
+                  defaultRadius: radius,
+                  startAngle: 0,
+                  endAngle: Math.PI * 2,
+                  alpha: alpha,
+                  color: { r: random(0, 100), g: random(0, 100), b: 255 },
+                  speed: alpha + 1,
+                  amplitude: random(50, 200),
+                  isBurst: false,
+              };
+          }
+      
+          drawParticles() {
+              this.particles.forEach((particle) => {
+                  // 位置情報更新
+                  this.moveParticle(particle);
+                  // particle描画
+                  this.context.beginPath();
+                  this.context.fillStyle = `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particle.alpha})`;
+                  this.context.arc(
+                      particle.x,
+                      particle.y,
+                      particle.radius,
+                      particle.startAngle,
+                      particle.endAngle
+                  );
+                  this.context.fill();
+              });
+          }
+      
+          moveParticle(particle) {
+              particle.x += particle.speed;
+              particle.y =
+                  particle.startY +
+                  particle.amplitude * Math.sin(((particle.x / 5) * Math.PI) / 180);
+          }
+      
+          render() {
+              // canvas初期化
+              this.context.clearRect(
+                  0,
+                  0,
+                  this.canvasWidth + this.particleMaxRadius * 2,
+                  this.canvasHeight
+              );
+      
+              // particleを描画
+              this.drawParticles();
+      
+              // 画面から消えたら新しいparticleに差し替え
+              this.particles.forEach((particle) => {
+                  if (particle.x - particle.radius >= this.canvasWidth) {
+                      this.particles[particle.id] = this.createParticle(
+                          particle.id,
+                          true
+                      );
+                  }
+              });
+      
+              requestAnimationFrame(this.render.bind(this));
+          }
+      }
+      
+      new Visual();
+    </script>
+  </body>
+</html>

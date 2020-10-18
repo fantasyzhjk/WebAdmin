@@ -1,0 +1,8 @@
+sinatra:
+  port: 8080
+  adminPassSHA256: ''
+mysql:
+  host: ''
+  username: ''
+  password: ''
+  database: ''
