@@ -12,7 +12,8 @@ $client = Mysql2::Client.new(
   host: $config['mysql']['host'], # 主机
   username: $config['mysql']['username'], # 用户名
   password: $config['mysql']['password'], # 密码
-  database: $config['mysql']['database'] # 数据库
+  database: $config['mysql']['database'], # 数据库
+  flags: Mysql2::Client::MULTI_STATEMENTS
 )
 
 class App < Sinatra::Base
